@@ -7,3 +7,4 @@ The website is based on the SES Society of IIT BHILAI, its highlights its field 
 a timeline of their upcoming events and their socials and E-mail for contact. It also includes a gallery which showcases the previous tasks undertaken by them. 
 This website was created by Amay Chourasiya & Sarang Nath Tripathi along with taking help from Gemini. 
 This website used open-sourced available photos and photos from the Instagram handle of SES.
+Thank you 
