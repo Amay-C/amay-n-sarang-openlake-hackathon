@@ -1,5 +1,8 @@
 # amay-n-sarang-openlake-hackathon
+For best view use in desktop or a laptop
+
 Did you clicked the logo of SES and the image of drone?? if not try it now. 
+
 This website is created as a part of openlake hackathon by team Amay Chourasiya and Sarang Nath Tripathi.
 The link of the hosted website is: 
    https://teamamaynsarang.netlify.app/
