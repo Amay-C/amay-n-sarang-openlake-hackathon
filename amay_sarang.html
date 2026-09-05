@@ -1,0 +1,956 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Space Exploration Society | IIT Bhilai</title>
+    <style>
+        /* CSS Variables for Theme */
+        :root {
+            --primary-color: #0b0c10;
+            --secondary-color: #1f2833;
+            --accent-color: #66fcf1;
+            --accent-dim: #45a29e;
+            --text-light: #c5c6c7;
+            --white: #ffffff;
+        }
+
+        /* Basic Reset & Typography */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--primary-color);
+            color: var(--text-light);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        h1, h2, h3 {
+            color: var(--white);
+        }
+
+        /* Canvas Background for Constellations */
+        #canvas-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        /* Ensure all content sits above the canvas */
+        header *, .container *, .future-section *, footer * {
+            position: relative;
+            z-index: 2;
+        }
+
+        /* Cursor Guide Popup Styling */
+        .cursor-guide {
+            position: fixed;
+            top: -100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(11, 12, 16, 0.8);
+            border: 1px solid var(--accent-color);
+            box-shadow: 0 0 15px rgba(102, 252, 241, 0.4);
+            color: var(--white);
+            padding: 15px 30px;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            letter-spacing: 1px;
+            z-index: 9999;
+            backdrop-filter: blur(10px);
+            pointer-events: none;
+            transition: top 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55), opacity 0.6s ease;
+            opacity: 0;
+        }
+
+        .cursor-guide.show {
+            top: 30px;
+            opacity: 1;
+        }
+
+        /* Rocket Easter Egg Animations with Fumes */
+        #rocket-egg {
+            position: fixed;
+            bottom: -200px;
+            left: -200px;
+            z-index: 9999;
+            pointer-events: none;
+            opacity: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .rocket-emoji {
+            font-size: 5rem;
+            position: relative;
+            z-index: 2;
+        }
+
+        /* Fumes Effect */
+        .fumes {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            width: 30px;
+            height: 250px;
+            background: linear-gradient(to bottom, #ffffff 0%, #ffeb3b 10%, #ff5722 25%, rgba(100, 100, 100, 0.8) 50%, transparent 100%);
+            border-radius: 50px;
+            filter: blur(12px);
+            transform: rotate(45deg);
+            transform-origin: top center;
+            z-index: 1;
+            opacity: 0;
+        }
+
+        #rocket-egg.launch {
+            animation: rocketFly 2.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+
+        #rocket-egg.launch .fumes {
+            animation: fumesFlicker 0.15s infinite alternate;
+        }
+
+        @keyframes rocketFly {
+            0% { bottom: 5vh; left: -200px; opacity: 1; transform: scale(0.8); }
+            100% { bottom: 120vh; left: 120vw; opacity: 1; transform: scale(1.5); }
+        }
+
+        @keyframes fumesFlicker {
+            0% { height: 200px; opacity: 0.8; filter: blur(10px); }
+            100% { height: 280px; opacity: 1; filter: blur(14px); width: 40px; }
+        }
+
+        /* Drone Flyover Animation */
+        #drone-egg {
+            position: fixed;
+            top: 30%;
+            left: -200px;
+            width: 100px;
+            z-index: 9999;
+            pointer-events: none;
+            opacity: 0;
+            filter: drop-shadow(0 0 15px var(--accent-color));
+        }
+
+        #drone-egg.flyover {
+            animation: droneFly 4s ease-in-out forwards;
+        }
+
+        @keyframes droneFly {
+            0% { left: -200px; top: 40%; opacity: 1; transform: rotate(10deg); }
+            25% { top: 30%; transform: rotate(-5deg); }
+            50% { top: 45%; transform: rotate(10deg); }
+            75% { top: 35%; transform: rotate(-5deg); }
+            100% { left: 110vw; top: 40%; opacity: 1; transform: rotate(0deg); }
+        }
+
+        /* Clickable Elements Styles */
+        .hero-logo, #drone-trigger {
+            cursor: pointer;
+        }
+
+        .hero-logo {
+            width: 130px;
+            height: 130px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-bottom: 20px;
+            border: 2px solid var(--accent-color);
+            box-shadow: 0 0 25px rgba(102, 252, 241, 0.4);
+            animation: fadeIn 0.5s ease-out;
+            transition: transform 0.3s;
+        }
+
+        .hero-logo:hover {
+            transform: scale(1.05);
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(102, 252, 241, 0.7); }
+            70% { transform: scale(1.05); box-shadow: 0 0 0 15px rgba(102, 252, 241, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(102, 252, 241, 0); }
+        }
+
+        @keyframes panImage {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-15px); }
+            60% { transform: translateY(-7px); }
+        }
+
+        /* Header / Hero Section */
+        header {
+            position: relative;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            background: linear-gradient(rgba(11, 12, 16, 0.8), rgba(11, 12, 16, 0.9)), url('https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1920&q=80');
+            background-size: cover;
+            background-position: center;
+            animation: panImage 30s infinite linear;
+            padding: 0 20px;
+        }
+
+        .hero-title {
+            font-size: 3.5rem;
+            letter-spacing: 2px;
+            margin-bottom: 5px;
+            animation: fadeIn 1s ease-out;
+        }
+
+        .hero-subtitle {
+            font-size: 1.5rem;
+            color: var(--accent-color);
+            margin-bottom: 20px;
+            animation: fadeIn 1.5s ease-out;
+        }
+
+        .society-highlight {
+            background: var(--accent-color);
+            color: var(--primary-color);
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 1.1rem;
+            display: inline-block;
+            margin-bottom: 30px;
+            animation: fadeIn 2s ease-out;
+        }
+        
+        /* Scroll Down Graphic */
+        .scroll-down {
+            position: absolute;
+            bottom: 30px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: var(--text-light);
+            text-transform: uppercase;
+            font-size: 0.9rem;
+            letter-spacing: 2px;
+            animation: bounce 2s infinite;
+            cursor: pointer;
+        }
+        
+        .scroll-down span {
+            font-size: 2rem;
+            color: var(--accent-color);
+            margin-top: -5px;
+        }
+
+        /* Container & Sections */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 80px 20px;
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 50px;
+            border-bottom: 3px solid var(--accent-color);
+            display: inline-block;
+            padding-bottom: 10px;
+            position: relative;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        /* Two Pillars Section */
+        .pillars {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 40px;
+        }
+
+        .card {
+            background-color: var(--secondary-color);
+            border-radius: 10px;
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 10px 20px rgba(102, 252, 241, 0.2);
+        }
+
+        .card img {
+            width: 100%;
+            height: 250px;
+            object-fit: cover;
+        }
+
+        .card-content {
+            padding: 30px;
+        }
+
+        .card-title {
+            color: var(--accent-color);
+            margin-bottom: 15px;
+            font-size: 1.5rem;
+        }
+        
+        /* Upcoming Events Section */
+        .events-list {
+            list-style: none;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .event-item {
+            background-color: var(--secondary-color);
+            border-left: 5px solid var(--accent-color);
+            margin-bottom: 20px;
+            padding: 25px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .event-item:hover {
+            transform: translateX(10px);
+            box-shadow: 0 5px 15px rgba(102, 252, 241, 0.1);
+        }
+
+        .event-date {
+            min-width: 140px;
+            color: var(--accent-color);
+            font-weight: bold;
+            font-size: 1.2rem;
+            text-transform: uppercase;
+        }
+
+        .event-details h3 {
+            margin-bottom: 5px;
+            font-size: 1.4rem;
+        }
+
+        /* FAQ Section Styles */
+        .faq-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .faq-item {
+            background-color: var(--secondary-color);
+            margin-bottom: 15px;
+            border-radius: 8px;
+            border-left: 5px solid var(--accent-color);
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        .faq-question {
+            width: 100%;
+            background-color: transparent;
+            border: none;
+            color: var(--white);
+            font-size: 1.2rem;
+            font-weight: bold;
+            text-align: left;
+            padding: 20px 25px;
+            cursor: pointer;
+            outline: none;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background-color 0.3s ease;
+        }
+
+        .faq-question:hover {
+            background-color: rgba(102, 252, 241, 0.05);
+        }
+
+        .faq-question::after {
+            content: '+';
+            font-size: 1.8rem;
+            color: var(--accent-color);
+            transition: transform 0.3s ease;
+        }
+
+        .faq-question.active::after {
+            transform: rotate(45deg); 
+        }
+
+        .faq-answer {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease-out;
+            background-color: rgba(11, 12, 16, 0.4);
+        }
+
+        .faq-answer p {
+            padding: 0 25px 25px;
+            color: var(--text-light);
+            margin: 0;
+        }
+
+        /* Future Prospects Section */
+        .future-section {
+            text-align: center;
+            padding: 80px 20px;
+            background: linear-gradient(135deg, var(--secondary-color) 0%, var(--primary-color) 100%);
+            border-top: 1px solid var(--accent-dim);
+            border-bottom: 1px solid var(--accent-dim);
+        }
+
+        .future-btn {
+            background-color: var(--accent-color);
+            color: var(--primary-color);
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            border-radius: 50px;
+            cursor: pointer;
+            animation: pulse 2s infinite;
+            transition: background-color 0.3s ease;
+        }
+
+        .future-btn:hover {
+            background-color: var(--white);
+            animation: none;
+            transform: scale(1.05);
+        }
+
+        /* Gallery Section Styles */
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .gallery-item {
+            position: relative;
+            overflow: hidden;
+            border-radius: 10px;
+            border: 2px solid var(--secondary-color);
+            aspect-ratio: 4 / 3;
+        }
+
+        .gallery-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.4s ease, opacity 0.4s ease;
+        }
+
+        .gallery-item:hover img {
+            transform: scale(1.1);
+            opacity: 0.8;
+            cursor: pointer;
+        }
+
+        .gallery-item:hover {
+            border-color: var(--accent-color);
+            box-shadow: 0 5px 15px rgba(102, 252, 241, 0.3);
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(11, 12, 16, 0.9);
+            z-index: 3000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background-color: var(--secondary-color);
+            padding: 40px;
+            border-radius: 15px;
+            max-width: 600px;
+            width: 90%;
+            text-align: center;
+            position: relative;
+            border: 2px solid var(--accent-color);
+            animation: fadeIn 0.4s ease-out;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-content img {
+            width: 100%;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            color: var(--text-light);
+            font-size: 2rem;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+
+        .close-btn:hover {
+            color: var(--accent-color);
+        }
+
+        /* Footer & Contact Section */
+        footer {
+            background-color: #050507;
+            padding: 50px 20px 30px;
+            text-align: center;
+            border-top: 1px solid var(--secondary-color);
+        }
+
+        .footer-content {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .contact-info {
+            margin-bottom: 30px;
+        }
+
+        .contact-info h3 {
+            color: var(--accent-color);
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            letter-spacing: 1px;
+        }
+
+        .contact-link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin: 10px 20px;
+            font-size: 1.2rem;
+            color: var(--white);
+            text-decoration: none;
+            transition: color 0.3s ease, transform 0.3s ease;
+        }
+
+        .contact-link:hover {
+            color: var(--accent-color);
+            transform: translateY(-3px);
+        }
+
+        .contact-icon {
+            margin-right: 10px;
+            fill: currentColor;
+            width: 24px;
+            height: 24px;
+        }
+
+        .copyright {
+            color: var(--text-light);
+            font-size: 0.9rem;
+            border-top: 1px solid var(--secondary-color);
+            padding-top: 20px;
+            margin-top: 10px;
+        }
+        
+        strong {
+            color: var(--white);
+        }
+        
+        @media (max-width: 768px) {
+            .event-item {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .event-date {
+                margin-bottom: 10px;
+            }
+            .contact-link {
+                display: flex;
+                margin: 15px 0;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="rocket-egg">
+        <span class="rocket-emoji">🚀</span>
+        <div class="fumes"></div>
+    </div>
+    
+    <svg id="drone-egg" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 8V12M12 12V16M12 12H8M12 12H16M4 8H8V12H4V8ZM16 8H20V12H16V8ZM4 16H8V20H4V16ZM16 16H20V20H16V16Z" stroke="#66fcf1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M6 6L8 8M18 6L16 8M6 18L8 16M18 18L16 16" stroke="#66fcf1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+
+    <div id="cursorGuide" class="cursor-guide">✨ Move the cursor to see new constellations</div>
+
+    <canvas id="canvas-bg"></canvas>
+
+    <header>
+        <img src="photo.jpeg" alt="Space Exploration Society Logo" class="hero-logo" id="logo-trigger" title="Launch!">
+        <h1 class="hero-title">Space Exploration Society</h1>
+        <h2 class="hero-subtitle">Indian Institute of Technology, Bhilai (SES)</h2>
+        <div class="society-highlight">More Than A Club. A Research Society.</div>
+        <p style="max-width: 600px; font-size: 1.2rem;">Dedicated to the advancement of Aerospace, Aero-modelling, and Astronomy through hands-on engineering, Computer Vision, and Artificial Intelligence.</p>
+        
+        <div class="scroll-down" onclick="document.getElementById('domains').scrollIntoView({behavior: 'smooth'})">
+            Scroll Down
+            <span>&#x2304;</span>
+        </div>
+    </header>
+
+    <div class="container" id="domains">
+        <h2 class="section-title">Our Domains</h2>
+        
+        <div class="pillars">
+            <div class="card">
+                <img src="https://images.unsplash.com/photo-1527977966376-1c8408f9f108?auto=format&fit=crop&w=800&q=80" alt="Drone Development" id="drone-trigger" title="Fly a drone!">
+                <div class="card-content">
+                    <h3 class="card-title">Aero-modelling</h3>
+                    <p>We build UAVs and drones completely from scratch. Going beyond standard RC flight, we implement <strong>Computer Vision (CV)</strong> and <strong>Artificial Intelligence</strong> to teach our drones spatial awareness, creating advanced <strong>obstacle-avoiding</strong> autonomous systems for real-world applications.</p>
+                </div>
+            </div>
+
+            <div class="card">
+                <img src="https://images.unsplash.com/photo-1464802686167-b939a6910659?auto=format&fit=crop&w=800&q=80" alt="Astrophotography">
+                <div class="card-content">
+                    <h3 class="card-title">Astronomy & Astrophysics</h3>
+                    <p>We routinely organize <strong>sky-watching sessions</strong> and professional <strong>astrophotography workshops</strong>. We are heavily focused on integrating <strong>AI and ML</strong> (utilizing Astropy) for advanced celestial tracking, object finding, and stellar data analysis.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container" style="padding-top: 20px;">
+        <h2 class="section-title">Upcoming Events</h2>
+        <ul class="events-list">
+            <li class="event-item">
+                <div class="event-date">Oct 15, 2026</div>
+                <div class="event-details">
+                    <h3>Astrophotography Workshop</h3>
+                    <p>Learn the basics of capturing stunning deep-space images using DSLR cameras and tracking mounts.</p>
+                </div>
+            </li>
+
+            <li class="event-item">
+                <div class="event-date">Nov 02, 2026</div>
+                <div class="event-details">
+                    <h3>Drone CV Integration Seminar</h3>
+                    <p>A hands-on session on integrating computer vision modules with flight controllers for obstacle avoidance.</p>
+                </div>
+            </li>
+
+            <li class="event-item">
+                <div class="event-date">Nov 18, 2026</div>
+                <div class="event-details">
+                    <h3>Sky-Watching Session</h3>
+                    <p>Join us on the main campus ground for an open-to-all telescope viewing of Jupiter and Saturn.</p>
+                </div>
+            </li>
+        </ul>
+    </div>
+
+    <section class="future-section">
+        <h2 style="margin-bottom: 30px; font-size: 2rem;">Beyond The Horizon</h2>
+        <button class="future-btn" id="prospectsBtn">Click Here to Explore Future Prospects</button>
+    </section>
+
+    <div class="container" style="padding-top: 40px;">
+        <h2 class="section-title">Frequently Asked Questions</h2>
+        <div class="faq-container">
+            
+            <div class="faq-item">
+                <button class="faq-question">Will there be telescope sessions?</button>
+                <div class="faq-answer">
+                    <p>Yes, absolutely! We frequently organize sky-watching sessions and astrophotography workshops. You will get hands-on experience operating professional telescopes to track and observe deep-space objects and celestial events.</p>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <button class="faq-question">What will I learn?</button>
+                <div class="faq-answer">
+                    <p>You will learn practical, cross-disciplinary engineering. This includes building UAVs from scratch, programming microcontrollers, integrating Computer Vision (CV) and AI for autonomous navigation, and utilizing machine learning libraries like Astropy for space data analysis.</p>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <button class="faq-question">Any benefit for my resume?</button>
+                <div class="faq-answer">
+                    <p>Highly beneficial. As a Research Society rather than a standard club, SES focuses on real-world problem-solving. Working on our autonomous drones or high-altitude weather balloon project will provide you with a standout portfolio of practical hardware and software engineering experience.</p>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <button class="faq-question">How much time will it take?</button>
+                <div class="faq-answer">
+                    <p>Time commitment is flexible and depends on the specific project group you join. Typically, dedicating just a few hours a week for meetings, workshops, and hands-on building sessions is enough to make a significant impact and gain valuable experience.</p>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="container">
+        <h2 class="section-title">Gallery</h2>
+        <div class="gallery-grid">
+            
+            <div class="gallery-item">
+                <img src="ses1.jpeg" alt="SES Activity 1">
+            </div>
+
+            <div class="gallery-item">
+                <img src="ses2.jpeg" alt="SES Activity 2">
+            </div>
+
+            <div class="gallery-item">
+                <img src="ses3.jpeg" alt="SES Activity 3">
+            </div>
+
+            <div class="gallery-item">
+                <img src="ses4.jpeg"SES Activity 4">
+            </div>
+
+            <div class="gallery-item">
+                <img src="ses5.jpeg" alt="SES Activity 5">
+            </div>
+
+            <div class="gallery-item">
+                <img src="ses6.jpeg" alt="SES Activity 6">
+            </div>
+
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="futureModal">
+        <div class="modal-content">
+            <span class="close-btn" id="closeModal">&times;</span>
+            <h3 style="color: var(--accent-color); font-size: 2rem; margin-bottom: 10px;">Reaching the Edge of Space</h3>
+            <p><strong>The High-Altitude Weather Balloon Project</strong></p>
+            
+            <img src="wb.jpeg" alt="Weather Balloon Near Space">
+            
+            <p style="text-align: left; margin-top: 15px;">
+                Our most ambitious ongoing project involves designing and launching high-altitude weather balloons to touch the edge of space. 
+                <br><br>
+                Equipped with custom telemetry, AI-stabilized camera payloads, and GPS tracking, this initiative aims to capture <strong>stunning, high-resolution imagery of the Earth's curvature</strong> while retrieving vital atmospheric data.
+            </p>
+        </div>
+    </div>
+
+    <footer>
+        <div class="footer-content">
+            <div class="contact-info">
+                <h3>Contact Us</h3>
+                
+                <a href="mailto:Ses@iitbhilai.ac.in" class="contact-link">
+                    <svg class="contact-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M20 4H4C2.9 4 2.01 4.9 2.01 6L2 18C2 19.1 2.9 20 4 20H20C21.1 20 22 19.1 22 18V6C22 4.9 21.1 4 20 4ZM20 8L12 13L4 8V6L12 11L20 6V8Z"/>
+                    </svg>
+                    Ses@iitbhilai.ac.in
+                </a>
+                
+                <a href="https://www.instagram.com/ses_iitbh?igsi=MWRlbXowM2IwbGlhYQ==" target="_blank" rel="noopener noreferrer" class="contact-link">
+                    <svg class="contact-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M7.8 2H16.2C19.4 2 22 4.6 22 7.8V16.2C22 19.4 19.4 22 16.2 22H7.8C4.6 22 2 19.4 2 16.2V7.8C2 4.6 4.6 2 7.8 2ZM7.6 4C5.6 4 4 5.6 4 7.6V16.4C4 18.4 5.6 20 7.6 20H16.4C18.4 20 20 18.4 20 16.4V7.6C20 5.6 18.4 4 16.4 4H7.6ZM12 6.8C14.872 6.8 17.2 9.128 17.2 12C17.2 14.872 14.872 17.2 12 17.2C9.128 17.2 6.8 14.872 6.8 12C6.8 9.128 9.128 6.8 12 6.8ZM12 8.8C10.233 8.8 8.8 10.233 8.8 12C8.8 13.767 10.233 15.2 12 15.2C13.767 15.2 15.2 13.767 15.2 12C15.2 10.233 13.767 8.8 12 8.8ZM17.2 5.6C17.863 5.6 18.4 6.137 18.4 6.8C18.4 7.463 17.863 8 17.2 8C16.537 8 16 7.463 16 6.8C16 6.137 16.537 5.6 17.2 5.6Z"/>
+                    </svg>
+                    @ses_iitbh
+                </a>
+            </div>
+            <p> Made in IIT BHILAI by Amay Chourasiya & Sarang Nath Tripathi</p>        
+            <p class="copyright">&copy; 2026 Space Exploration Society (SES), IIT Bhilai. Innovating the skies and beyond.</p>
+        </div>
+    </footer>
+
+    <script>
+        // --- 1. Easter Eggs Trigger & Sound Logic ---
+        const logoTrigger = document.getElementById('logo-trigger');
+        const rocketEgg = document.getElementById('rocket-egg');
+        
+        // Define audio objects
+        const rocketSound = new Audio('rocket.mp3');
+        const droneSound = new Audio('drone.mp3');
+        
+        logoTrigger.addEventListener('click', () => {
+            rocketEgg.classList.remove('launch');
+            void rocketEgg.offsetWidth; 
+            rocketEgg.classList.add('launch');
+            
+            rocketSound.currentTime = 0; 
+            rocketSound.play().catch(e => console.log("Sound could not be played. Check if rocket.mp3 exists in the folder."));
+        });
+
+        const droneTrigger = document.getElementById('drone-trigger');
+        const droneEgg = document.getElementById('drone-egg');
+
+        droneTrigger.addEventListener('click', () => {
+            droneEgg.classList.remove('flyover');
+            void droneEgg.offsetWidth;
+            droneEgg.classList.add('flyover');
+            
+            droneSound.currentTime = 0; 
+            droneSound.play().catch(e => console.log("Sound could not be played. Check if drone.mp3 exists in the folder."));
+        });
+
+        // --- 2. Guide Popup Logic ---
+        window.addEventListener('load', () => {
+            if (!sessionStorage.getItem('sesGuideShown')) {
+                const guide = document.getElementById('cursorGuide');
+                setTimeout(() => { guide.classList.add('show'); }, 1000);
+                setTimeout(() => { guide.classList.remove('show'); }, 6000);
+                sessionStorage.setItem('sesGuideShown', 'true');
+            }
+        });
+
+        // --- 3. Constellation Background Script ---
+        const canvas = document.getElementById('canvas-bg');
+        const ctx = canvas.getContext('2d');
+        let width, height;
+        let particles = [];
+        let mouse = { x: null, y: null };
+
+        window.addEventListener('mousemove', (e) => {
+            mouse.x = e.clientX;
+            mouse.y = e.clientY;
+        });
+        window.addEventListener('mouseout', () => {
+            mouse.x = null;
+            mouse.y = null;
+        });
+
+        function resize() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        class Particle {
+            constructor() {
+                this.x = Math.random() * width;
+                this.y = Math.random() * height;
+                this.vx = (Math.random() - 0.5) * 0.6;
+                this.vy = (Math.random() - 0.5) * 0.6;
+                this.radius = Math.random() * 1.5 + 0.5;
+            }
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                if (this.x < 0 || this.x > width) this.vx = -this.vx;
+                if (this.y < 0 || this.y > height) this.vy = -this.vy;
+            }
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(102, 252, 241, 0.8)';
+                ctx.fill();
+            }
+        }
+
+        for (let i = 0; i < 75; i++) {
+            particles.push(new Particle());
+        }
+
+        function animateCanvas() {
+            ctx.clearRect(0, 0, width, height);
+            
+            for (let i = 0; i < particles.length; i++) {
+                particles[i].update();
+                particles[i].draw();
+                
+                for (let j = i; j < particles.length; j++) {
+                    const dx = particles[i].x - particles[j].x;
+                    const dy = particles[i].y - particles[j].y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (dist < 120) {
+                        ctx.beginPath();
+                        ctx.strokeStyle = `rgba(102, 252, 241, ${0.15 - dist/800})`;
+                        ctx.lineWidth = 0.5;
+                        ctx.moveTo(particles[i].x, particles[i].y);
+                        ctx.lineTo(particles[j].x, particles[j].y);
+                        ctx.stroke();
+                    }
+                }
+                
+                if (mouse.x != null) {
+                    const dx = particles[i].x - mouse.x;
+                    const dy = particles[i].y - mouse.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (dist < 150) {
+                        ctx.beginPath();
+                        ctx.strokeStyle = `rgba(255, 255, 255, ${0.3 - dist/500})`;
+                        ctx.lineWidth = 1;
+                        ctx.moveTo(particles[i].x, particles[i].y);
+                        ctx.lineTo(mouse.x, mouse.y);
+                        ctx.stroke();
+                    }
+                }
+            }
+            requestAnimationFrame(animateCanvas);
+        }
+        animateCanvas();
+
+        // --- 4. Modal Logic ---
+        const modal = document.getElementById('futureModal');
+        const btn = document.getElementById('prospectsBtn');
+        const closeBtn = document.getElementById('closeModal');
+
+        btn.addEventListener('click', () => {
+            modal.style.display = 'flex';
+        });
+
+        closeBtn.addEventListener('click', () => {
+            modal.style.display = 'none';
+        });
+
+        window.addEventListener('click', (event) => {
+            if (event.target === modal) {
+                modal.style.display = 'none';
+            }
+        });
+
+        // --- 5. FAQ Accordion Logic ---
+        const faqQuestions = document.querySelectorAll('.faq-question');
+        
+        faqQuestions.forEach(question => {
+            question.addEventListener('click', () => {
+                question.classList.toggle('active');
+                const answer = question.nextElementSibling;
+                
+                if (question.classList.contains('active')) {
+                    answer.style.maxHeight = answer.scrollHeight + "px";
+                } else {
+                    answer.style.maxHeight = 0;
+                }
+            });
+        });
+    </script>
+</body>
+</html>
