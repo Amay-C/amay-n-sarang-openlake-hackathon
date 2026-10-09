@@ -12,3 +12,4 @@ a timeline of their upcoming events and their socials and E-mail for contact. It
 This website was created by Amay Chourasiya & Sarang Nath Tripathi along with taking help from Gemini. 
 This website used open-sourced available photos and photos from the Instagram handle of SES.
 Thank you 
+to all
